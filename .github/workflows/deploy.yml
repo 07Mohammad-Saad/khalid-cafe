@@ -1,0 +1,14 @@
+name: Deploy Khalid Cafe
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test workflow
+        run: echo "CI/CD pipeline started!"
