@@ -7,8 +7,10 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Test workflow
-        run: echo "CI/CD pipeline started!"
+      - name: Deploy website
+        run: |
+          cd /home/ms57/khalid-cafe
+          git pull origin main
