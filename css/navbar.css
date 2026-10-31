@@ -1,0 +1,170 @@
+/* ===================================================
+   NAVBAR.CSS — Navigation bar styles
+   Khalid Café — Static Website
+   =================================================== */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  padding: 1.25rem 0;
+  transition: background var(--transition-slow), padding var(--transition-slow), box-shadow var(--transition-slow);
+}
+
+/* Scrolled state — added by JS */
+.navbar.is-scrolled {
+  background: rgba(13, 10, 7, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.85rem 0;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+}
+
+.navbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xl);
+}
+
+/* ── Logo ── */
+.navbar__logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.navbar__logo-name {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.02em;
+}
+
+.navbar__logo-tagline {
+  font-family: var(--font-script);
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  letter-spacing: 0.06em;
+}
+
+/* ── Nav links ── */
+.navbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.navbar__link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color var(--transition-fast);
+  position: relative;
+}
+
+.navbar__link::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--color-primary);
+  transition: width var(--transition-base);
+}
+
+.navbar__link:hover {
+  color: var(--color-text);
+}
+
+.navbar__link:hover::after {
+  width: 100%;
+}
+
+/* ── CTA button in nav ── */
+.navbar__cta {
+  padding: 0.55rem 1.25rem;
+  font-size: 0.8rem;
+}
+
+/* ── Hamburger (mobile) ── */
+.navbar__toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+}
+
+.navbar__toggle-bar {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-base), opacity var(--transition-base);
+}
+
+/* Hamburger → X animation */
+.navbar__toggle.is-open .navbar__toggle-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.navbar__toggle.is-open .navbar__toggle-bar:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.navbar__toggle.is-open .navbar__toggle-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Mobile nav menu ── */
+@media (max-width: 768px) {
+  .navbar__toggle {
+    display: flex;
+  }
+
+  .navbar__nav {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: min(280px, 80vw);
+    height: 100vh;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    background: var(--color-surface);
+    padding: 5rem var(--space-xl) var(--space-xl);
+    box-shadow: -4px 0 40px rgba(0, 0, 0, 0.7);
+    transition: right var(--transition-slow);
+    overflow-y: auto;
+  }
+
+  .navbar__nav.is-open {
+    right: 0;
+  }
+
+  .navbar__link {
+    display: block;
+    width: 100%;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 1rem;
+  }
+
+  .navbar__link::after {
+    display: none;
+  }
+
+  .navbar__cta {
+    margin-top: var(--space-lg);
+  }
+}

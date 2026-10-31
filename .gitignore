@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────
+# Khalid Café — .gitignore
+# Covers: current static stage + all future learning stages
+# ─────────────────────────────────────────────────────
+
+# ── OS files ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor / IDE ──────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Python (Stage 6 — Backend) ────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+.env
+*.env
+pip-log.txt
+pip-delete-this-directory.txt
+dist/
+build/
+*.egg-info/
+*.egg
+.pytest_cache/
+
+# ── Database (Stage 7) ────────────────────────────────
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# ── Docker (Stage 9) ──────────────────────────────────
+.dockerignore
+
+# ── Secrets & credentials (all stages) ───────────────
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+.secrets
+
+# ── Logs (Stage 13) ───────────────────────────────────
+*.log
+logs/
+
+# ── Node.js (if ever used) ────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# ── Terraform / IaC (Stage 16) ────────────────────────
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
