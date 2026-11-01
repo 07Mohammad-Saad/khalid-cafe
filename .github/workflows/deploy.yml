@@ -14,3 +14,4 @@ jobs:
         run: |
           cd /home/ms57/khalid-cafe
           git pull origin main
+          sudo docker compose up -d --build
