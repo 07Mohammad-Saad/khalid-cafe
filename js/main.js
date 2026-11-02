@@ -35,9 +35,9 @@ function onDOMReady(callback) {
    2. NAVBAR — scroll & mobile toggle
 ────────────────────────────────────────── */
 function initNavbar() {
-  const navbar   = document.getElementById('navbar');
-  const toggle   = document.getElementById('navbar-toggle');
-  const navMenu  = document.getElementById('navbar-nav');
+  const navbar = document.getElementById('navbar');
+  const toggle = document.getElementById('navbar-toggle');
+  const navMenu = document.getElementById('navbar-nav');
   const navLinks = navMenu ? navMenu.querySelectorAll('.navbar__link') : [];
 
   if (!navbar) return;
@@ -64,7 +64,7 @@ function initNavbar() {
   navLinks.forEach(function (link) {
     link.addEventListener('click', function () {
       if (navMenu) navMenu.classList.remove('is-open');
-      if (toggle)  toggle.classList.remove('is-open');
+      if (toggle) toggle.classList.remove('is-open');
       document.body.style.overflow = '';
     });
   });
@@ -98,7 +98,7 @@ function initHero() {
    4. MENU FILTER TABS
 ────────────────────────────────────────── */
 function initMenuFilter() {
-  const tabs  = document.querySelectorAll('.menu-tab');
+  const tabs = document.querySelectorAll('.menu-tab');
   const cards = document.querySelectorAll('.menu-card');
 
   if (!tabs.length || !cards.length) return;
@@ -132,9 +132,9 @@ function initMenuFilter() {
    simulateSubmit() call with a real fetch().
 ────────────────────────────────────────── */
 function initOrderForm() {
-  const form       = document.getElementById('order-form');
-  const statusEl   = document.getElementById('order-form-status');
-  const submitBtn  = document.getElementById('order-submit-btn');
+  const form = document.getElementById('order-form');
+  const statusEl = document.getElementById('order-form-status');
+  const submitBtn = document.getElementById('order-submit-btn');
 
   if (!form) return;
 
