@@ -215,7 +215,7 @@ function validateOrderData(data) {
     return 'Please enter a valid 10-digit Indian mobile number.';
   }
   if (!data.items || data.items.trim().length < 3) {
-    return 'Please specify what you would like to order.';
+    return 'Please select at least one item from the menu.';
   }
   return null;
 }
@@ -283,7 +283,224 @@ function initScrollReveal() {
 }
 
 /* ──────────────────────────────────────────
-   7. SMOOTH SCROLL — for anchor links
+   7. ORDER ITEM PICKER (Dropdowns & Quantity)
+────────────────────────────────────────── */
+const CAFE_MENU_ITEMS = [
+  // Coffee
+  { name: 'Classic Cappuccino', price: 120, category: 'coffee' },
+  { name: 'Cold Brew', price: 150, category: 'coffee' },
+  { name: 'Café Mocha', price: 140, category: 'coffee' },
+  // Food
+  { name: 'Classic Club Sandwich', price: 180, category: 'food' },
+  { name: 'Spicy Paneer Wrap', price: 160, category: 'food' },
+  { name: 'Crispy Veg Burger', price: 50, category: 'food' },
+  // Desserts
+  { name: 'Chocolate Lava Cake', price: 200, category: 'dessert' },
+  { name: 'Belgian Waffle', price: 175, category: 'dessert' },
+  // Cold Drinks
+  { name: 'Alphonso Mango Cooler', price: 130, category: 'beverage' },
+  { name: 'Rose Lemonade', price: 110, category: 'beverage' },
+  { name: 'Signature Mocktail', price: 150, category: 'beverage' },
+  { name: 'Campa', price: 10, category: 'beverage' }
+];
+
+function initOrderPicker() {
+  const categorySelect = document.getElementById('order-category-select');
+  const itemSelect = document.getElementById('order-item-select');
+  const qtyInput = document.getElementById('order-item-qty');
+  const qtyMinus = document.getElementById('order-qty-minus');
+  const qtyPlus = document.getElementById('order-qty-plus');
+  const addBtn = document.getElementById('order-add-item-btn');
+  const selectedList = document.getElementById('order-selected-list');
+  const selectedEmpty = document.getElementById('order-selected-empty');
+  const selectedTotal = document.getElementById('order-selected-total');
+  const selectedTotalVal = document.getElementById('order-selected-total-val');
+  const hiddenItemsInput = document.getElementById('order-items');
+  const pickerError = document.getElementById('order-picker-error');
+  const form = document.getElementById('order-form');
+
+  if (!categorySelect || !itemSelect || !addBtn || !hiddenItemsInput) return;
+
+  let selectedItems = [];
+
+  function populateItems(filterCategory) {
+    const filtered = filterCategory === 'all'
+      ? CAFE_MENU_ITEMS
+      : CAFE_MENU_ITEMS.filter(function (i) { return i.category === filterCategory; });
+
+    let options = '<option value="">-- Choose an item --</option>';
+    filtered.forEach(function (item) {
+      options += '<option value="' + item.name + '">' + item.name + ' (₹' + item.price + ')</option>';
+    });
+
+    itemSelect.innerHTML = options;
+    if (filtered.length > 0) {
+      itemSelect.selectedIndex = 1;
+    }
+  }
+
+  function updateHiddenInputAndUI() {
+    if (!selectedItems.length) {
+      hiddenItemsInput.value = '';
+      if (selectedEmpty) selectedEmpty.style.display = 'block';
+      if (selectedTotal) selectedTotal.classList.add('is-hidden');
+      if (selectedList) selectedList.innerHTML = '';
+      return;
+    }
+
+    if (selectedEmpty) selectedEmpty.style.display = 'none';
+    if (selectedTotal) selectedTotal.classList.remove('is-hidden');
+
+    let totalAmount = 0;
+    let listHTML = '';
+    const summaryParts = [];
+
+    selectedItems.forEach(function (item, index) {
+      const lineTotal = item.price * item.quantity;
+      totalAmount += lineTotal;
+      summaryParts.push(item.quantity + '× ' + item.name + ' (₹' + lineTotal + ')');
+
+      listHTML +=
+        '<div class="order-selected-item">' +
+          '<div class="order-selected-item__title">' +
+            '<span class="order-selected-item__qty">' + item.quantity + '×</span>' +
+            '<span class="order-selected-item__name">' + item.name + '</span>' +
+          '</div>' +
+          '<span class="order-selected-item__price">₹' + lineTotal + '</span>' +
+          '<button type="button" class="order-selected-item__remove" data-remove-index="' + index + '" aria-label="Remove ' + item.name + '">&times;</button>' +
+        '</div>';
+    });
+
+    if (selectedList) selectedList.innerHTML = listHTML;
+    if (selectedTotalVal) selectedTotalVal.textContent = '₹' + totalAmount;
+    hiddenItemsInput.value = summaryParts.join(', ');
+
+    if (pickerError) {
+      pickerError.textContent = '';
+      pickerError.classList.remove('is-visible');
+    }
+  }
+
+  // Populate items on init
+  populateItems('all');
+
+  // Filter items by category
+  categorySelect.addEventListener('change', function () {
+    populateItems(this.value);
+  });
+
+  // Quantity stepper listeners
+  if (qtyMinus && qtyInput) {
+    qtyMinus.addEventListener('click', function () {
+      const current = parseInt(qtyInput.value, 10) || 1;
+      if (current > 1) {
+        qtyInput.value = current - 1;
+      }
+    });
+  }
+
+  if (qtyPlus && qtyInput) {
+    qtyPlus.addEventListener('click', function () {
+      const current = parseInt(qtyInput.value, 10) || 1;
+      if (current < 50) {
+        qtyInput.value = current + 1;
+      }
+    });
+  }
+
+  if (qtyInput) {
+    qtyInput.addEventListener('change', function () {
+      let val = parseInt(this.value, 10);
+      if (isNaN(val) || val < 1) val = 1;
+      if (val > 50) val = 50;
+      this.value = val;
+    });
+  }
+
+  // Add Item button listener
+  addBtn.addEventListener('click', function () {
+    const itemName = itemSelect.value;
+    if (!itemName) {
+      if (pickerError) {
+        pickerError.textContent = 'Please choose an item from the dropdown.';
+        pickerError.classList.add('is-visible');
+      }
+      return;
+    }
+
+    const menuItem = CAFE_MENU_ITEMS.find(function (i) { return i.name === itemName; });
+    if (!menuItem) return;
+
+    const qty = parseInt(qtyInput.value, 10) || 1;
+
+    // If item already in selectedItems, increment quantity
+    const existing = selectedItems.find(function (i) { return i.name === menuItem.name; });
+    if (existing) {
+      existing.quantity += qty;
+    } else {
+      selectedItems.push({
+        name: menuItem.name,
+        price: menuItem.price,
+        quantity: qty
+      });
+    }
+
+    // Reset quantity back to 1 by default
+    qtyInput.value = '1';
+
+    updateHiddenInputAndUI();
+
+    // Brief feedback on add button
+    const origText = addBtn.innerHTML;
+    addBtn.innerHTML = '&#10003; Added!';
+    setTimeout(function () {
+      addBtn.innerHTML = origText;
+    }, 700);
+  });
+
+  // Remove Item delegation
+  if (selectedList) {
+    selectedList.addEventListener('click', function (e) {
+      const removeBtn = e.target.closest('[data-remove-index]');
+      if (!removeBtn) return;
+      const idx = parseInt(removeBtn.getAttribute('data-remove-index'), 10);
+      if (!isNaN(idx) && idx >= 0 && idx < selectedItems.length) {
+        selectedItems.splice(idx, 1);
+        updateHiddenInputAndUI();
+      }
+    });
+  }
+
+  // Handle auto-add on submit if dropdown has an item selected but user didn't click '+ Add'
+  if (form) {
+    form.addEventListener('submit', function () {
+      if (selectedItems.length === 0 && itemSelect && itemSelect.value) {
+        const menuItem = CAFE_MENU_ITEMS.find(function (i) { return i.name === itemSelect.value; });
+        if (menuItem) {
+          const qty = parseInt(qtyInput ? qtyInput.value : 1, 10) || 1;
+          selectedItems.push({
+            name: menuItem.name,
+            price: menuItem.price,
+            quantity: qty
+          });
+          updateHiddenInputAndUI();
+        }
+      }
+    }, true);
+
+    form.addEventListener('reset', function () {
+      selectedItems = [];
+      setTimeout(function () {
+        populateItems('all');
+        if (qtyInput) qtyInput.value = '1';
+        updateHiddenInputAndUI();
+      }, 50);
+    });
+  }
+}
+
+/* ──────────────────────────────────────────
+   8. SMOOTH SCROLL — for anchor links
 ────────────────────────────────────────── */
 function initSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
@@ -305,13 +522,14 @@ function initSmoothScroll() {
 }
 
 /* ──────────────────────────────────────────
-   8. INIT ALL
+   9. INIT ALL
 ────────────────────────────────────────── */
 onDOMReady(function () {
   initNavbar();
   initHero();
   initMenuFilter();
   initOrderForm();
+  initOrderPicker();
   initScrollReveal();
   initSmoothScroll();
 });

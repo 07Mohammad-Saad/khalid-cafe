@@ -845,9 +845,64 @@
               </div>
 
               <div class="form-group">
-                <label for="order-items" class="form-label">What Would You Like? *</label>
-                <textarea id="order-items" name="items" class="form-textarea"
-                  placeholder="e.g. 2× Cappuccino, 1× Paneer Wrap, 1× Lava Cake" required rows="4"></textarea>
+                <label class="form-label">Select Your Items *</label>
+
+                <div class="order-picker" id="order-picker">
+                  <!-- Category & Item Selectors -->
+                  <div class="order-picker__selectors">
+                    <div class="order-picker__field">
+                      <label for="order-category-select" class="order-picker__sublabel">Category</label>
+                      <select id="order-category-select" class="form-select order-picker__select">
+                        <option value="all">All Categories</option>
+                        <option value="coffee">☕ Coffee</option>
+                        <option value="food">🍽️ Food</option>
+                        <option value="dessert">🍰 Desserts</option>
+                        <option value="beverage">🥤 Cold Drinks</option>
+                      </select>
+                    </div>
+
+                    <div class="order-picker__field order-picker__field--grow">
+                      <label for="order-item-select" class="order-picker__sublabel">Menu Item</label>
+                      <select id="order-item-select" class="form-select order-picker__select">
+                        <!-- Populated dynamically via JavaScript -->
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Quantity & Add Button Controls -->
+                  <div class="order-picker__controls">
+                    <div class="order-picker__qty-wrap">
+                      <label for="order-item-qty" class="order-picker__sublabel">Quantity</label>
+                      <div class="order-qty-stepper">
+                        <button type="button" class="order-qty-stepper__btn" id="order-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                        <input type="number" id="order-item-qty" class="order-qty-stepper__input" min="1" max="50" value="1" aria-label="Item quantity" />
+                        <button type="button" class="order-qty-stepper__btn" id="order-qty-plus" aria-label="Increase quantity">&plus;</button>
+                      </div>
+                    </div>
+
+                    <button type="button" class="btn btn--outline order-picker__add-btn" id="order-add-item-btn">
+                      + Add Item
+                    </button>
+                  </div>
+
+                  <!-- Selected Items Display Box -->
+                  <div class="order-selected-box" id="order-selected-box">
+                    <div class="order-selected-box__empty" id="order-selected-empty">
+                      <span>No items selected yet. Choose a category, item &amp; quantity above.</span>
+                    </div>
+                    <div class="order-selected-list" id="order-selected-list">
+                      <!-- Rendered item chips -->
+                    </div>
+                    <div class="order-selected-total is-hidden" id="order-selected-total">
+                      <span>Estimated Total:</span>
+                      <strong id="order-selected-total-val">₹0</strong>
+                    </div>
+                  </div>
+
+                  <!-- Hidden input to submit items formatted string to form validation & API -->
+                  <input type="hidden" id="order-items" name="items" value="" required />
+                  <span class="order-picker__error" id="order-picker-error"></span>
+                </div>
               </div>
 
               <div class="form-group">
