@@ -88,30 +88,57 @@
   ────────────────────────────────────────── */
 
   /**
+   * Broadcast custom event when cart state changes
+   */
+  function notifyCartUpdated() {
+    try {
+      const payload = {
+        items: cart.map(function (i) {
+          return {
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            image: i.image,
+            lineTotal: i.price * i.quantity
+          };
+        }),
+        itemCount: getCartItemCount(),
+        totalAmount: getCartTotal()
+      };
+      window.dispatchEvent(new CustomEvent('khalid:cart-updated', { detail: payload }));
+    } catch (e) {
+      console.warn('[Cart] Error notifying cart update:', e);
+    }
+  }
+
+  /**
    * Add an item to the cart or increment quantity
-   * @param {{ name: string, price: number, image: string }} item
+   * @param {{ name: string, price: number, image?: string, quantity?: number }} item
    */
   function addToCart(item) {
     if (!item || !item.name) return;
+
+    const qtyToAdd = Math.max(1, Math.min(50, parseInt(item.quantity, 10) || 1));
 
     const existing = cart.find(function (i) {
       return i.name.toLowerCase() === item.name.toLowerCase();
     });
 
     if (existing) {
-      existing.quantity += 1;
+      existing.quantity = Math.min(50, existing.quantity + qtyToAdd);
     } else {
       cart.push({
         name: item.name.trim(),
         price: Number(item.price) || 0,
         image: item.image || 'images/menu-coffee.png',
-        quantity: 1
+        quantity: qtyToAdd
       });
     }
 
     saveCart();
     renderCart();
     bumpBadge();
+    notifyCartUpdated();
   }
 
   /**
@@ -121,19 +148,21 @@
    */
   function updateQuantity(name, newQuantity) {
     const index = cart.findIndex(function (i) {
-      return i.name === name;
+      return i.name.toLowerCase() === (name || '').toLowerCase();
     });
     if (index === -1) return;
 
-    const qty = parseInt(newQuantity, 10);
+    let qty = parseInt(newQuantity, 10);
     if (isNaN(qty) || qty <= 0) {
       cart.splice(index, 1);
     } else {
+      if (qty > 50) qty = 50;
       cart[index].quantity = qty;
     }
 
     saveCart();
     renderCart();
+    notifyCartUpdated();
   }
 
   /**
@@ -142,10 +171,11 @@
    */
   function removeItem(name) {
     cart = cart.filter(function (i) {
-      return i.name !== name;
+      return i.name.toLowerCase() !== (name || '').toLowerCase();
     });
     saveCart();
     renderCart();
+    notifyCartUpdated();
   }
 
   /**
@@ -155,6 +185,7 @@
     cart = [];
     saveCart();
     renderCart();
+    notifyCartUpdated();
   }
 
   /* ──────────────────────────────────────────
@@ -465,8 +496,9 @@
     viewItemsEl = document.getElementById('cart-view-items');
     viewCheckoutEl = document.getElementById('cart-view-checkout');
 
-    // 1. Render initial cart from localStorage
+    // 1. Render initial cart from localStorage & notify subscribers
     renderCart();
+    notifyCartUpdated();
 
     // 2. Navbar & Floating Cart Toggle Buttons
     const toggleBtn = document.getElementById('cart-toggle-btn');
@@ -559,37 +591,74 @@
       });
     }
 
-    // 6. Connect Menu Card "+ Add" Buttons
-    const addButtons = document.querySelectorAll('.menu-card__add-btn');
-    addButtons.forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
+    // 6. Connect Menu Card Steppers and "+ Add" Buttons
+    const menuCards = document.querySelectorAll('.menu-card');
+    menuCards.forEach(function (card) {
+      const qtyInput = card.querySelector('.menu-qty-input');
+      const minusBtn = card.querySelector('.menu-qty-btn--minus');
+      const plusBtn = card.querySelector('.menu-qty-btn--plus');
+      const addBtn = card.querySelector('.menu-card__add-btn');
 
-        const name = btn.getAttribute('data-item') || 'Menu Item';
-        const price = parseInt(btn.getAttribute('data-price'), 10) || 0;
+      if (minusBtn && qtyInput) {
+        minusBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          let current = parseInt(qtyInput.value, 10) || 1;
+          if (current > 1) {
+            qtyInput.value = String(current - 1);
+          }
+        });
+      }
 
-        // Find product image from card
-        const card = btn.closest('.menu-card');
-        let image = 'images/menu-coffee.png';
-        if (card) {
+      if (plusBtn && qtyInput) {
+        plusBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          let current = parseInt(qtyInput.value, 10) || 1;
+          if (current < 50) {
+            qtyInput.value = String(current + 1);
+          }
+        });
+      }
+
+      if (qtyInput) {
+        qtyInput.addEventListener('change', function () {
+          let val = parseInt(this.value, 10);
+          if (isNaN(val) || val < 1) val = 1;
+          if (val > 50) val = 50;
+          this.value = String(val);
+        });
+      }
+
+      if (addBtn) {
+        addBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+
+          const name = addBtn.getAttribute('data-item') || 'Menu Item';
+          const price = parseInt(addBtn.getAttribute('data-price'), 10) || 0;
+          const qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
+
+          // Find product image from card
+          let image = 'images/menu-coffee.png';
           const imgEl = card.querySelector('.menu-card__image');
           if (imgEl && imgEl.getAttribute('src')) {
             image = imgEl.getAttribute('src');
           }
-        }
 
-        addToCart({ name: name, price: price, image: image });
+          addToCart({ name: name, price: price, quantity: qty, image: image });
 
-        // Visual feedback on button
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '&#10003; Added';
-        btn.classList.add('is-added');
+          // Reset menu card stepper back to 1
+          if (qtyInput) qtyInput.value = '1';
 
-        setTimeout(function () {
-          btn.innerHTML = originalText;
-          btn.classList.remove('is-added');
-        }, 900);
-      });
+          // Visual feedback on button
+          const originalText = addBtn.innerHTML;
+          addBtn.innerHTML = '&#10003; Added' + (qty > 1 ? ' (' + qty + ')' : '');
+          addBtn.classList.add('is-added');
+
+          setTimeout(function () {
+            addBtn.innerHTML = originalText;
+            addBtn.classList.remove('is-added');
+          }, 900);
+        });
+      }
     });
 
     // 7. Checkout Form Submit Handler
@@ -665,13 +734,17 @@
   // Expose clean namespace on window for external inspection and future FastAPI hook
   window.KhalidCafeCart = {
     getCart: function () { return [...cart]; },
+    getItemCount: getCartItemCount,
+    getTotalAmount: getCartTotal,
     addToCart: addToCart,
     updateQuantity: updateQuantity,
     removeItem: removeItem,
     clearCart: clearCart,
     openCart: openCart,
     closeCart: closeCart,
-    submitOrder: submitOrder
+    toggleCart: toggleCart,
+    submitOrder: submitOrder,
+    notifyCartUpdated: notifyCartUpdated
   };
 })();
 

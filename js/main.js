@@ -141,12 +141,38 @@ function initOrderForm() {
   form.addEventListener('submit', function (event) {
     event.preventDefault();
 
-    /* Collect form data into a plain object */
+    /* If cart is empty, but an item is selected in dropdown, auto-add it to cart */
+    const itemSelect = document.getElementById('order-item-select');
+    const qtyInput = document.getElementById('order-item-qty');
+    const currentCart = (window.KhalidCafeCart ? window.KhalidCafeCart.getCart() : []);
+
+    if (currentCart.length === 0 && itemSelect && itemSelect.value) {
+      const picked = CAFE_MENU_ITEMS.find(function (i) { return i.name === itemSelect.value; });
+      if (picked && window.KhalidCafeCart) {
+        const qty = parseInt(qtyInput ? qtyInput.value : 1, 10) || 1;
+        window.KhalidCafeCart.addToCart({
+          name: picked.name,
+          price: picked.price,
+          quantity: qty,
+          image: MENU_ITEM_IMAGES[picked.name] || 'images/menu-coffee.png'
+        });
+      }
+    }
+
+    const cartNow = (window.KhalidCafeCart ? window.KhalidCafeCart.getCart() : []);
     const formData = new FormData(form);
     const orderData = {};
     formData.forEach(function (value, key) {
       orderData[key] = value;
     });
+
+    if (cartNow.length > 0) {
+      orderData.items = cartNow.map(function (i) {
+        return i.quantity + '× ' + i.name + ' (₹' + (i.price * i.quantity) + ')';
+      }).join(', ');
+    } else {
+      orderData.items = '';
+    }
 
     /* Validate required fields */
     const validationError = validateOrderData(orderData);
@@ -172,6 +198,7 @@ function initOrderForm() {
      *   .then(function (data) {
      *     showFormStatus(statusEl, 'success', '✓ Order placed! We will call you to confirm.');
      *     form.reset();
+     *     if (window.KhalidCafeCart) window.KhalidCafeCart.clearCart();
      *   })
      *   .catch(function (err) {
      *     showFormStatus(statusEl, 'error', 'Something went wrong. Please try again or call us.');
@@ -192,6 +219,9 @@ function initOrderForm() {
           '✓ Your order request has been received! We\'ll call you shortly to confirm.'
         );
         form.reset();
+        if (window.KhalidCafeCart) {
+          window.KhalidCafeCart.clearCart();
+        }
       } else {
         showFormStatus(
           statusEl,
@@ -304,6 +334,21 @@ const CAFE_MENU_ITEMS = [
   { name: 'Campa', price: 10, category: 'beverage' }
 ];
 
+const MENU_ITEM_IMAGES = {
+  'Classic Cappuccino': 'images/menu-coffee.png',
+  'Cold Brew': 'images/menu-coffee.png',
+  'Café Mocha': 'images/menu-coffee.png',
+  'Classic Club Sandwich': 'images/menu-sandwich.png',
+  'Spicy Paneer Wrap': 'images/menu-sandwich.png',
+  'Crispy Veg Burger': 'images/menu-burger.jpg',
+  'Chocolate Lava Cake': 'images/menu-dessert.png',
+  'Belgian Waffle': 'images/menu-dessert.png',
+  'Alphonso Mango Cooler': 'images/menu-coffee.png',
+  'Rose Lemonade': 'images/menu-coffee.png',
+  'Signature Mocktail': 'images/menu-mocktail.jpg',
+  'Campa': 'images/menu-campa.jpg'
+};
+
 function initOrderPicker() {
   const categorySelect = document.getElementById('order-category-select');
   const itemSelect = document.getElementById('order-item-select');
@@ -317,11 +362,16 @@ function initOrderPicker() {
   const selectedTotalVal = document.getElementById('order-selected-total-val');
   const hiddenItemsInput = document.getElementById('order-items');
   const pickerError = document.getElementById('order-picker-error');
+  const viewCartLink = document.getElementById('order-view-cart-link');
   const form = document.getElementById('order-form');
 
   if (!categorySelect || !itemSelect || !addBtn || !hiddenItemsInput) return;
 
-  let selectedItems = [];
+  function escapeText(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
 
   function populateItems(filterCategory) {
     if (!itemSelect) return;
@@ -353,10 +403,16 @@ function initOrderPicker() {
     }
   }
 
-  function updateHiddenInputAndUI() {
-    if (!selectedItems.length) {
+  /**
+   * Render pre-order selected items synchronized with central cart store
+   * @param {Array} [items] Optional item list from cart event
+   */
+  function renderOrderTray(items) {
+    const cartItems = items || (window.KhalidCafeCart ? window.KhalidCafeCart.getCart() : []);
+
+    if (!cartItems || cartItems.length === 0) {
       hiddenItemsInput.value = '';
-      if (selectedEmpty) selectedEmpty.style.display = 'block';
+      if (selectedEmpty) selectedEmpty.style.display = 'flex';
       if (selectedTotal) selectedTotal.classList.add('is-hidden');
       if (selectedList) selectedList.innerHTML = '';
       return;
@@ -369,19 +425,20 @@ function initOrderPicker() {
     let listHTML = '';
     const summaryParts = [];
 
-    selectedItems.forEach(function (item, index) {
+    cartItems.forEach(function (item) {
       const lineTotal = item.price * item.quantity;
       totalAmount += lineTotal;
       summaryParts.push(item.quantity + '× ' + item.name + ' (₹' + lineTotal + ')');
 
       listHTML +=
-        '<div class="order-selected-item">' +
+        '<div class="order-selected-item" data-item-name="' + escapeText(item.name) + '">' +
           '<div class="order-selected-item__title">' +
-            '<span class="order-selected-item__qty">' + item.quantity + '×</span>' +
-            '<span class="order-selected-item__name">' + item.name + '</span>' +
+            '<span class="order-selected-item__qty">' + item.quantity + '&times;</span>' +
+            '<span class="order-selected-item__name">' + escapeText(item.name) + '</span>' +
+            '<span class="order-selected-item__unit-price">(₹' + item.price + ' each)</span>' +
           '</div>' +
           '<span class="order-selected-item__price">₹' + lineTotal + '</span>' +
-          '<button type="button" class="order-selected-item__remove" data-remove-index="' + index + '" aria-label="Remove ' + item.name + '">&times;</button>' +
+          '<button type="button" class="order-selected-item__remove" data-remove-name="' + escapeText(item.name) + '" aria-label="Remove ' + escapeText(item.name) + '">&times;</button>' +
         '</div>';
     });
 
@@ -434,7 +491,7 @@ function initOrderPicker() {
     });
   }
 
-  // Add Item button listener
+  // Add Item button listener — adds to central cart
   addBtn.addEventListener('click', function () {
     const itemName = itemSelect.value;
     if (!itemName) {
@@ -449,68 +506,69 @@ function initOrderPicker() {
     if (!menuItem) return;
 
     const qty = parseInt(qtyInput.value, 10) || 1;
+    const img = MENU_ITEM_IMAGES[menuItem.name] || 'images/menu-coffee.png';
 
-    // If item already in selectedItems, increment quantity
-    const existing = selectedItems.find(function (i) { return i.name === menuItem.name; });
-    if (existing) {
-      existing.quantity += qty;
-    } else {
-      selectedItems.push({
+    // Add to single source of truth (KhalidCafeCart)
+    if (window.KhalidCafeCart) {
+      window.KhalidCafeCart.addToCart({
         name: menuItem.name,
         price: menuItem.price,
-        quantity: qty
+        quantity: qty,
+        image: img
       });
     }
 
     // Reset quantity back to 1 by default
     qtyInput.value = '1';
 
-    updateHiddenInputAndUI();
-
-    // Brief feedback on add button
+    // Visual feedback on add button
     const origText = addBtn.innerHTML;
-    addBtn.innerHTML = '&#10003; Added!';
+    addBtn.innerHTML = '&#10003; Added' + (qty > 1 ? ' (' + qty + ')' : '');
+    addBtn.classList.add('is-added');
+
     setTimeout(function () {
       addBtn.innerHTML = origText;
-    }, 700);
+      addBtn.classList.remove('is-added');
+    }, 800);
   });
 
-  // Remove Item delegation
+  // Remove Item delegation — removes from central cart
   if (selectedList) {
     selectedList.addEventListener('click', function (e) {
-      const removeBtn = e.target.closest('[data-remove-index]');
+      const removeBtn = e.target.closest('[data-remove-name]');
       if (!removeBtn) return;
-      const idx = parseInt(removeBtn.getAttribute('data-remove-index'), 10);
-      if (!isNaN(idx) && idx >= 0 && idx < selectedItems.length) {
-        selectedItems.splice(idx, 1);
-        updateHiddenInputAndUI();
+      const itemName = removeBtn.getAttribute('data-remove-name');
+      if (itemName && window.KhalidCafeCart) {
+        window.KhalidCafeCart.removeItem(itemName);
       }
     });
   }
 
-  // Handle auto-add on submit if dropdown has an item selected but user didn't click '+ Add'
-  if (form) {
-    form.addEventListener('submit', function () {
-      if (selectedItems.length === 0 && itemSelect && itemSelect.value) {
-        const menuItem = CAFE_MENU_ITEMS.find(function (i) { return i.name === itemSelect.value; });
-        if (menuItem) {
-          const qty = parseInt(qtyInput ? qtyInput.value : 1, 10) || 1;
-          selectedItems.push({
-            name: menuItem.name,
-            price: menuItem.price,
-            quantity: qty
-          });
-          updateHiddenInputAndUI();
-        }
+  // View Cart link opens the global drawer
+  if (viewCartLink) {
+    viewCartLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (window.KhalidCafeCart) {
+        window.KhalidCafeCart.openCart();
       }
-    }, true);
+    });
+  }
 
+  // Synchronize whenever cart updates anywhere on page
+  window.addEventListener('khalid:cart-updated', function (e) {
+    const items = (e.detail && Array.isArray(e.detail.items)) ? e.detail.items : null;
+    renderOrderTray(items);
+  });
+
+  // Initial render from existing cart (e.g. from localStorage)
+  renderOrderTray();
+
+  if (form) {
     form.addEventListener('reset', function () {
-      selectedItems = [];
       setTimeout(function () {
         populateItems('all');
         if (qtyInput) qtyInput.value = '1';
-        updateHiddenInputAndUI();
+        renderOrderTray();
       }, 50);
     });
   }
