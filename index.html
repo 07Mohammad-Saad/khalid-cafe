@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="css/hero.css" />
   <link rel="stylesheet" href="css/menu.css" />
   <link rel="stylesheet" href="css/sections.css" />
+  <link rel="stylesheet" href="css/cart.css" />
   <link rel="stylesheet" href="css/responsive.css" />
 </head>
 
@@ -59,13 +60,22 @@
           </li>
         </ul>
 
-        <!-- Hamburger button (mobile) -->
-        <button class="navbar__toggle" id="navbar-toggle" aria-label="Toggle navigation menu" aria-expanded="false"
-          aria-controls="navbar-nav">
-          <span class="navbar__toggle-bar"></span>
-          <span class="navbar__toggle-bar"></span>
-          <span class="navbar__toggle-bar"></span>
-        </button>
+        <!-- Navbar Actions (Cart & Mobile Hamburger) -->
+        <div class="navbar__actions">
+          <button class="cart-btn" id="cart-toggle-btn" aria-label="View shopping cart" aria-haspopup="dialog">
+            <span class="cart-btn__icon" aria-hidden="true">🛒</span>
+            <span class="cart-btn__label">Cart</span>
+            <span class="cart-btn__badge" id="cart-badge" aria-live="polite">0</span>
+          </button>
+
+          <!-- Hamburger button (mobile) -->
+          <button class="navbar__toggle" id="navbar-toggle" aria-label="Toggle navigation menu" aria-expanded="false"
+            aria-controls="navbar-nav">
+            <span class="navbar__toggle-bar"></span>
+            <span class="navbar__toggle-bar"></span>
+            <span class="navbar__toggle-bar"></span>
+          </button>
+        </div>
 
       </div>
     </nav>
@@ -1046,7 +1056,182 @@
     </div>
   </footer>
 
+  <!-- ═══════════════════════════════════════
+       SHOPPING CART DRAWER & CHECKOUT
+  ═══════════════════════════════════════ -->
+  <div class="cart-backdrop" id="cart-backdrop" aria-hidden="true"></div>
+
+  <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-drawer-title"
+    aria-hidden="true">
+
+    <!-- Cart View (Step 1: Items & Totals) -->
+    <div class="cart-view" id="cart-view-items">
+      <div class="cart-drawer__header">
+        <div class="cart-drawer__title-wrap">
+          <h2 class="cart-drawer__title" id="cart-drawer-title">Your Order Cart</h2>
+          <span class="cart-drawer__count-pill" id="cart-header-count">0 items</span>
+        </div>
+        <button type="button" class="cart-drawer__close-btn" id="cart-close-btn" aria-label="Close cart">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div class="cart-empty" id="cart-empty-state">
+        <div class="cart-empty__icon" aria-hidden="true">☕</div>
+        <h3 class="cart-empty__title">Your cart is empty</h3>
+        <p class="cart-empty__desc">Looks like you haven't added any coffees, bites, or desserts yet.</p>
+        <a href="#menu" class="btn btn--primary cart-empty__btn" id="cart-empty-explore-btn">
+          Explore Menu
+        </a>
+      </div>
+
+      <!-- Populated State: Items List -->
+      <div class="cart-items" id="cart-items-container">
+        <!-- Dynamically injected via JS -->
+      </div>
+
+      <!-- Drawer Footer (Subtotal & Checkout CTA) -->
+      <div class="cart-drawer__footer" id="cart-drawer-footer">
+        <div class="cart-summary">
+          <div class="cart-summary__row">
+            <span class="cart-summary__label">Subtotal</span>
+            <span class="cart-summary__value" id="cart-subtotal">₹0</span>
+          </div>
+          <div class="cart-summary__row">
+            <span class="cart-summary__label">Taxes &amp; Packaging</span>
+            <span class="cart-summary__value cart-summary__value--free">Included</span>
+          </div>
+          <div class="cart-summary__divider"></div>
+          <div class="cart-summary__row cart-summary__row--total">
+            <span class="cart-summary__label">Total</span>
+            <span class="cart-summary__value" id="cart-total">₹0</span>
+          </div>
+        </div>
+
+        <div class="cart-drawer__actions">
+          <button type="button" class="btn btn--primary cart-drawer__checkout-btn" id="cart-proceed-checkout-btn">
+            Proceed to Checkout &rarr;
+          </button>
+          <button type="button" class="cart-drawer__clear-btn" id="cart-clear-all-btn">
+            Clear Cart
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkout View (Step 2: Customer Details & Summary) -->
+    <div class="cart-view is-hidden" id="cart-view-checkout">
+      <div class="cart-drawer__header">
+        <button type="button" class="cart-drawer__back-btn" id="checkout-back-btn" aria-label="Back to cart">
+          &larr; Back
+        </button>
+        <h2 class="cart-drawer__title">Checkout</h2>
+        <button type="button" class="cart-drawer__close-btn" id="checkout-close-btn" aria-label="Close checkout">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="checkout-scroll-area">
+        <!-- Order Summary Card -->
+        <div class="checkout-summary-card">
+          <div class="checkout-summary-card__header">
+            <span class="checkout-summary-card__title">Order Summary</span>
+            <span class="checkout-summary-card__count" id="checkout-summary-count">0 items</span>
+          </div>
+          <div class="checkout-summary-card__items" id="checkout-summary-items">
+            <!-- Dynamically injected item summary rows -->
+          </div>
+          <div class="checkout-summary-card__total-row">
+            <span>Amount Payable:</span>
+            <strong class="checkout-summary-card__total" id="checkout-summary-total">₹0</strong>
+          </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <form class="checkout-form" id="checkout-form" novalidate>
+          <div class="checkout-form__group">
+            <label for="checkout-name" class="checkout-form__label">Full Name *</label>
+            <input type="text" id="checkout-name" name="name" class="checkout-form__input"
+              placeholder="e.g. Khalid Shaikh" required autocomplete="name" />
+            <span class="checkout-form__error" id="checkout-name-error"></span>
+          </div>
+
+          <div class="checkout-form__group">
+            <label for="checkout-phone" class="checkout-form__label">Mobile Number *</label>
+            <input type="tel" id="checkout-phone" name="phone" class="checkout-form__input"
+              placeholder="10-digit number (e.g. 9876543210)" required maxlength="10" inputmode="numeric"
+              autocomplete="tel" />
+            <span class="checkout-form__error" id="checkout-phone-error"></span>
+          </div>
+
+          <div class="checkout-form__group">
+            <label class="checkout-form__label">Order Type *</label>
+            <div class="checkout-order-type">
+              <label class="checkout-type-radio">
+                <input type="radio" name="orderType" value="pickup" checked />
+                <span class="checkout-type-pill">
+                  <span class="checkout-type-icon">🛍️</span>
+                  <span>Pickup</span>
+                </span>
+              </label>
+              <label class="checkout-type-radio">
+                <input type="radio" name="orderType" value="dine-in" />
+                <span class="checkout-type-pill">
+                  <span class="checkout-type-icon">☕</span>
+                  <span>Dine-In</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="checkout-form__group">
+            <label for="checkout-instructions" class="checkout-form__label">Special Instructions (Optional)</label>
+            <textarea id="checkout-instructions" name="instructions" class="checkout-form__textarea"
+              placeholder="e.g. less sugar, extra napkins, allergy notes..." rows="2"></textarea>
+          </div>
+
+          <div class="checkout-form__notice">
+            <span class="checkout-notice-icon">ℹ️</span>
+            <span>Payment is made at the café (Cash, UPI, Card). Frontend submission will connect to the FastAPI backend.</span>
+          </div>
+
+          <button type="submit" class="btn btn--primary checkout-form__submit-btn" id="checkout-submit-btn">
+            Confirm &amp; Submit Order
+          </button>
+        </form>
+
+        <!-- Confirmation / Payload Info Card (Displayed after submission) -->
+        <div class="checkout-confirmation is-hidden" id="checkout-confirmation">
+          <div class="checkout-confirmation__icon">&#10003;</div>
+          <h3 class="checkout-confirmation__title">Order Captured!</h3>
+          <p class="checkout-confirmation__desc">
+            The order details have been validated and structured in the frontend. It is ready for FastAPI backend integration.
+          </p>
+          <div class="checkout-confirmation__details" id="checkout-confirmation-details">
+            <!-- Payload preview injected here -->
+          </div>
+          <button type="button" class="btn btn--primary checkout-confirmation__btn" id="checkout-new-order-btn">
+            Start New Order
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Floating Cart Pill (Mobile convenience) -->
+  <button type="button" class="floating-cart-pill is-hidden" id="floating-cart-pill" aria-label="Open Cart">
+    <span class="floating-cart-pill__icon">🛒</span>
+    <span class="floating-cart-pill__text">
+      <span id="floating-cart-count">0 items</span> &bull; <strong id="floating-cart-total">₹0</strong>
+    </span>
+    <span class="floating-cart-pill__arrow">&rarr;</span>
+  </button>
+
   <!-- JavaScript — deferred, after DOM is ready -->
+  <script src="js/cart.js" defer></script>
   <script src="js/main.js" defer></script>
 
 </body>
