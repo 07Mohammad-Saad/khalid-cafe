@@ -494,7 +494,14 @@
 .order-picker__select {
   background-color: var(--color-surface);
   font-size: 0.88rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.65rem 2.5rem 0.65rem 0.85rem;
+  color: var(--color-text);
+}
+
+.order-picker__select option {
+  background-color: var(--color-surface-2);
+  color: var(--color-text);
+  padding: 0.5rem;
 }
 
 .order-picker__controls {

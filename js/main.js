@@ -324,18 +324,32 @@ function initOrderPicker() {
   let selectedItems = [];
 
   function populateItems(filterCategory) {
-    const filtered = filterCategory === 'all'
+    if (!itemSelect) return;
+
+    // Clear options collection safely
+    itemSelect.options.length = 0;
+
+    // Add prompt option
+    const promptOpt = new Option('-- Choose an item --', '');
+    itemSelect.add(promptOpt);
+
+    const filtered = (!filterCategory || filterCategory === 'all')
       ? CAFE_MENU_ITEMS
       : CAFE_MENU_ITEMS.filter(function (i) { return i.category === filterCategory; });
 
-    let options = '<option value="">-- Choose an item --</option>';
     filtered.forEach(function (item) {
-      options += '<option value="' + item.name + '">' + item.name + ' (₹' + item.price + ')</option>';
+      const opt = new Option(item.name + ' (₹' + item.price + ')', item.name);
+      opt.setAttribute('data-category', item.category);
+      opt.setAttribute('data-price', String(item.price));
+      itemSelect.add(opt);
     });
 
-    itemSelect.innerHTML = options;
     if (filtered.length > 0) {
       itemSelect.selectedIndex = 1;
+      itemSelect.value = filtered[0].name;
+    } else {
+      itemSelect.selectedIndex = 0;
+      itemSelect.value = '';
     }
   }
 
@@ -382,10 +396,13 @@ function initOrderPicker() {
   }
 
   // Populate items on init
-  populateItems('all');
+  populateItems(categorySelect.value || 'all');
 
-  // Filter items by category
+  // Filter items by category (listen to both change and input)
   categorySelect.addEventListener('change', function () {
+    populateItems(this.value);
+  });
+  categorySelect.addEventListener('input', function () {
     populateItems(this.value);
   });
 
