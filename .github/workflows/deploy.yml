@@ -1,4 +1,3 @@
-
 name: Deploy Khalid Cafe
 
 on:
@@ -13,6 +12,6 @@ jobs:
     steps:
       - name: Deploy website
         run: |
-          cd /path/to/khalid-cafe
+          cd /home/ms57/khalid-cafe
           git pull origin main
           docker compose up -d --build
