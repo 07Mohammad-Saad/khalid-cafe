@@ -1,0 +1,81 @@
+
+# Khalid Cafe – System Architecture
+
+## 1. Project Overview
+
+Khalid Cafe is a static website developed as a practical cloud and Linux server management learning project.
+
+The project evolved from a simple frontend website into a hands-on server administration environment using Ubuntu, Nginx, Docker and Linux system administration tools.
+
+The project is currently not live. This documentation describes the learning and implementation environment.
+
+## 2. Website Architecture
+
+The website uses a simple frontend stack:
+
+- HTML5 – Website structure
+- CSS3 – Styling and responsive design
+- JavaScript – Client-side interactions
+- Images – Static visual assets
+
+No frontend framework or build process is required.
+
+## 3. Linux Server Environment
+
+The server environment was built using:
+
+- Ubuntu Linux running inside VirtualBox.
+- Linux user and group management.
+- File ownership and permission management.
+- SSH key-based remote access.
+- UFW firewall configuration.
+- Fail2ban for SSH protection.
+
+Sensitive network information and authentication details are intentionally excluded.
+
+## 4. Web Server & Service Management
+
+The project involved practical configuration and management of:
+
+- Nginx as a web server and reverse proxy.
+- Docker for container management practice.
+- Systemd for Linux service management.
+- Website serving through local services.
+- Configuration and service troubleshooting.
+
+The website and server are not currently running as a public deployment.
+
+## 5. Backup, Recovery & Monitoring
+
+Practical server maintenance included:
+
+- Compressed website backups using TAR archives.
+- SHA256 checksum verification.
+- Backup comparison and duplicate detection.
+- Restore and recovery testing.
+- Custom backup management utility.
+- Health-check and troubleshooting scripts.
+- Log inspection and service monitoring.
+
+## 6. Security & Maintenance
+
+Security practices implemented during the project:
+
+- SSH key-based authentication.
+- Password-based SSH login disabled.
+- Fail2ban SSH protection.
+- UFW firewall rules.
+- Restricted Linux file permissions.
+- Regular backup and recovery verification.
+
+No passwords, private keys, access tokens or sensitive infrastructure details are included in this repository.
+
+---
+
+## Project Status
+
+Khalid Cafe is currently a learning and portfolio project, not an active production website.
+
+The project demonstrates practical experience with frontend development, Linux administration, web server configuration, service management, backups and troubleshooting.
+
+**Built with curiosity, configured through practice.**
